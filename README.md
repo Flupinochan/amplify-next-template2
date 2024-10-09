@@ -1,25 +1,48 @@
-## AWS Amplify Next.js (App Router) Starter Template
+# フロー図
 
-This repository provides a starter template for creating applications using Next.js (App Router) and AWS Amplify, emphasizing easy setup for authentication, API, and database capabilities.
+xxx
 
-## Overview
+# Memo
 
-This template equips you with a foundational Next.js application integrated with AWS Amplify, streamlined for scalability and performance. It is ideal for developers looking to jumpstart their project with pre-configured AWS services like Cognito, AppSync, and DynamoDB.
+## Next.js (with Amplify) は、以下の GitHub テンプレートを利用
 
-## Features
+https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/
 
-- **Authentication**: Setup with Amazon Cognito for secure user authentication.
-- **API**: Ready-to-use GraphQL endpoint with AWS AppSync.
-- **Database**: Real-time database powered by Amazon DynamoDB.
+```bash
+# 開発環境を起動
+# amplify_outputs.json にデータが格納される(手動でデータをセットすることも可能)
+npm install
+npx ampx sandbox --stream-function-logs
+npm run dev
 
-## Deploying to AWS
+# 名前指定でサンドボックス作成(複数作成する場合など)
+npx ampx sandbox --identifier sandbox1
 
-For detailed instructions on deploying your application, refer to the [deployment section](https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/#deploy-a-fullstack-app-to-aws) of our documentation.
+npx ampx sandbox delete
+```
 
-## Security
+```bash
+Gen2は、ampxコマンドを使用する (Gen1は、amplifyコマンド)
+https://docs.amplify.aws/react/reference/cli-commands/
+```
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+```bash
+Git ベースの CI/CD ワークフローを使用しているため
+git commitしてgit pushすると本番環境にデプロイされる
+```
 
-## License
+## Sandbox(Amplify Studio/Amplify CLI)
 
-This library is licensed under the MIT-0 License. See the LICENSE file.
+以下は、旧バージョンの Gen1<br>
+https://github.com/aws-amplify/amplify-cli?tab=readme-ov-file<br>
+https://sandbox.amplifyapp.com/
+
+## Packages
+
+- Amplify
+- Langchain
+- Langfuse
+- TailwindCSS
+- Material UI
+- React Query
+- Redux
