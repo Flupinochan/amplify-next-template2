@@ -6,8 +6,10 @@ const schema = a.schema({
     .model({
       id: a.id().required(),
       email: a.email().required(),
-      messages: a.string().required(),
+      messages: a.string().array().required(),
       title: a.string(),
+      createdAt: a.datetime(),
+      updatedAt: a.datetime(),
     })
     .authorization((allow) => [allow.authenticated()]),
   ChatOpenAI: a
@@ -15,7 +17,7 @@ const schema = a.schema({
     .arguments({
       id: a.id().required(),
       email: a.email().required(),
-      messages: a.string(),
+      message: a.string().required(),
       title: a.string(),
     })
     .returns(a.string())

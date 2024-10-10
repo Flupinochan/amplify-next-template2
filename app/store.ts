@@ -1,10 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
 
 import userReducer from "./features/userSlice";
+import historyReducer from "./features/historySlice";
+import loadingChatReducer from "./features/loadingChatSlice";
 
 export const store = configureStore({
   reducer: {
     user: userReducer,
+    history: historyReducer,
+    loadingChat: loadingChatReducer,
   },
 });
 

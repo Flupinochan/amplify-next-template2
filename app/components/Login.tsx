@@ -21,21 +21,21 @@ const Login: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (attributes.email) {
       dispatch(setEmail(attributes.email));
     }
-  }
+  };
 
   useEffect(() => {
     Hub.listen('auth', ({ payload }) => {
       switch (payload.event) {
         case 'signedIn':
           console.log('user have been signedIn successfully.');
-          const auth = getAuth();
-          console.log(auth);
+          getAuth();
           break;
         case 'signedOut':
           console.log('user have been signedOut successfully.');
           break;
       }
     });
+    getAuth();
   }, []);
 
   return (

@@ -7,7 +7,7 @@ import { ChatPromptTemplate, MessagesPlaceholder, HumanMessagePromptTemplate, Sy
 import { RunnablePassthrough, RunnableSequence, RunnableWithMessageHistory } from "@langchain/core/runnables";
 import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
 import { StringOutputParser } from "@langchain/core/output_parsers";
-import { DynamoDBClient, PutItemCommand, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, PutItemCommand, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 
 // Environment
 const DYNAMODB_TABLE_NAME = process.env.DYNAMODB_TABLE_NAME as string;
@@ -23,20 +23,15 @@ const config = {
 // Secrets Manager (APIKeyなどのシークレットを取得)
 const secretClient = new SecretsManagerClient(config);
 async function getSecret(secretName: string): Promise<string> {
-  try {
-    const command = new GetSecretValueCommand({
-      SecretId: secretName,
-    });
-    const response = await secretClient.send(command);
-    if (response.SecretString) {
-      const secretJson = JSON.parse(response.SecretString);
-      return secretJson[secretName];
-    }
-    throw new Error(`Secret ${secretName} not found or empty`);
-  } catch (error) {
-    console.error("Error retrieving secret:", error);
-    throw error;
+  const command = new GetSecretValueCommand({
+    SecretId: secretName,
+  });
+  const response = await secretClient.send(command);
+  if (response.SecretString) {
+    const secretJson = JSON.parse(response.SecretString);
+    return secretJson[secretName];
   }
+  throw new Error(`Secret ${secretName} not found or empty`);
 }
 
 // LLM (OpenAI)
@@ -101,7 +96,7 @@ const memory = (sessionId: string) => {
 
 // Chain
 const chain = new RunnableWithMessageHistory({
-  runnable: prompt.pipe(modelBedrock).pipe(parser),
+  runnable: prompt.pipe(modelOpenAI).pipe(parser),
   inputMessagesKey: "input",
   outputMessagesKey: "output",
   historyMessagesKey: "chat_history",
@@ -113,47 +108,43 @@ const chain = new RunnableWithMessageHistory({
 // Emailキーを追加する関数
 const dynamoDBClient = new DynamoDBClient(config);
 async function addEmailToDynamoDB(sessionId: string, email: string) {
-  const getCommand = new GetItemCommand({
+  const updateCommand = new UpdateItemCommand({
     TableName: DYNAMODB_TABLE_NAME,
     Key: {
       id: { S: sessionId },
     },
+    UpdateExpression: "SET email = :email",
+    ExpressionAttributeValues: {
+      ":email": { S: email },
+    },
+    ConditionExpression: "attribute_not_exists(email)", // emailが存在しない場合のみ更新
   });
-  const existingItem = await dynamoDBClient.send(getCommand);
-  if (!existingItem.Item || !existingItem.Item.email) {
-    const putCommand = new PutItemCommand({
-      TableName: DYNAMODB_TABLE_NAME,
-      Item: {
-        id: { S: sessionId },
-        email: { S: email },
-      },
-    });
-    await dynamoDBClient.send(putCommand);
-  }
+  await dynamoDBClient.send(updateCommand);
 }
 
 // Entrypoint
 export const handler: Schema["ChatOpenAI"]["functionHandler"] = async (event) => {
   const id = event.arguments.id as string;
   const email = event.arguments.email as string;
-  const messages = event.arguments.messages as string;
+  const message = event.arguments.message as string;
 
   const input = {
-    input: "私の名前を英語に翻訳してください",
-  }
-  const input2 = {
-    input: "私の名前を覚えていますか",
-  }
+    input: message,
+  };
   const option = {
     configurable: {
       sessionId: id,
     },
   };
 
-  const res1 = await chain.invoke(input, option);
-  console.log(res1);
-  const res2 = await chain.invoke(input2, option);
-  console.log(res2);
+  const response = await chain.invoke(input, option);
+  console.log(response);
+
+  // const stream = await chain.stream(input, option); 
+  // for await (const res1 of stream) {
+  //   console.log(res1);
+  // }
+
   await addEmailToDynamoDB(id, email);
-  return messages;
+  return message;
 };

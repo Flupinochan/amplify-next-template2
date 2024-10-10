@@ -9,7 +9,7 @@ const initialState: UserState = {
 };
 
 const userSlice = createSlice({
-  name: 'user',
+  name: 'email',
   initialState,
   reducers: {
     setEmail: (state, action: PayloadAction<string>) => {
