@@ -4,7 +4,7 @@ import { styled } from '@mui/system';
 import { forwardRef } from 'react';
 
 const TextareaAutosizeCustom = forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>((props, ref) => {
-  return <TextareaAutosize ref={ref} aria-label="empty textarea" placeholder="Type anything…" {...props} />;
+  return <TextareaAutosize ref={ref} aria-label="empty textarea" placeholder="Type anything…" {...props} maxRows={3}/>;
 });
 
 const purple = {
@@ -36,33 +36,18 @@ const grey = {
 
 const TextareaAutosize = styled(BaseTextareaAutosize)(
   ({ theme }) => `
+  margin: auto;
   resize: none;
-  box-sizing: border-box;
   width: 100%;
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1.5;
-  padding: 8px 12px;
-  border-radius: 8px;
   color: ${theme.palette.mode === 'dark' ? grey[300] : purple[500]};
-  background: ${theme.palette.mode === 'dark' ? grey[900] : '#fff'};
-  border: 1px solid ${theme.palette.mode === 'dark' ? grey[700] : grey[200]};
-  box-shadow: 0px 2px 2px ${theme.palette.mode === 'dark' ? grey[900] : grey[50]};
-
-  &:hover {
-    border-color: ${purple[400]};
-  }
-
-  &:focus {
-    border-color: ${purple[400]};
-    box-shadow: 0 0 0 3px ${theme.palette.mode === 'dark' ? purple[600] : purple[200]};
-  }
+  background-color: rgb(209 213 219);
+  border: none;
 
   // firefox
   &:focus-visible {
     outline: 0;
   }
+
 `,
 );
 

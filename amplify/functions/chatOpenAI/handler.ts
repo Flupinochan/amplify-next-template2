@@ -8,6 +8,7 @@ import { RunnablePassthrough, RunnableSequence, RunnableWithMessageHistory } fro
 import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { DynamoDBClient, PutItemCommand, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
+import { CallbackHandler } from "langfuse-langchain";
 
 // Environment
 const DYNAMODB_TABLE_NAME = process.env.DYNAMODB_TABLE_NAME as string;
@@ -34,6 +35,15 @@ async function getSecret(secretName: string): Promise<string> {
   throw new Error(`Secret ${secretName} not found or empty`);
 }
 
+// Langfuse
+const langfuseSecretKey = await getSecret("langfusesecretkey");
+const langfusePublicKey = await getSecret("langfusepublickey");
+const langfuseCallbackHandler = new CallbackHandler({
+  secretKey: langfuseSecretKey,
+  publicKey: langfusePublicKey,
+  baseUrl: "https://cloud.langfuse.com",
+});
+
 // LLM (OpenAI)
 const openAIModelId = "gpt-4o-mini";
 const openapiKey = await getSecret("openapikey");
@@ -47,7 +57,8 @@ const modelOpenAI = new ChatOpenAI({
     project: openapiPj,
   },
   maxRetries: 3,
-  maxTokens: 1000,
+  maxTokens: 4000,
+  callbacks: [langfuseCallbackHandler],
 });
 
 // LLM (Bedrock)
@@ -59,7 +70,8 @@ const modelBedrock = new BedrockChat({
   timeout: 30000,
   maxRetries: 5,
   streaming: true,
-  maxTokens: 1000,
+  maxTokens: 4000,
+  callbacks: [langfuseCallbackHandler],
 });
 
 // Prompt
@@ -107,17 +119,18 @@ const chain = new RunnableWithMessageHistory({
 
 // Emailキーを追加する関数
 const dynamoDBClient = new DynamoDBClient(config);
-async function addEmailToDynamoDB(sessionId: string, email: string) {
+async function addEmailAndTimestampToDynamoDB(sessionId: string, email: string) {
   const updateCommand = new UpdateItemCommand({
     TableName: DYNAMODB_TABLE_NAME,
     Key: {
       id: { S: sessionId },
     },
-    UpdateExpression: "SET email = :email",
+    UpdateExpression: "SET email = if_not_exists(email, :email), createdAt = if_not_exists(createdAt, :createdAt), updatedAt = :updatedAt",
     ExpressionAttributeValues: {
       ":email": { S: email },
+      ":createdAt": { S: new Date().toISOString() },
+      ":updatedAt": { S: new Date().toISOString() },
     },
-    ConditionExpression: "attribute_not_exists(email)", // emailが存在しない場合のみ更新
   });
   await dynamoDBClient.send(updateCommand);
 }
@@ -134,17 +147,12 @@ export const handler: Schema["ChatOpenAI"]["functionHandler"] = async (event) =>
   const option = {
     configurable: {
       sessionId: id,
-    },
+    }
   };
 
   const response = await chain.invoke(input, option);
   console.log(response);
 
-  // const stream = await chain.stream(input, option); 
-  // for await (const res1 of stream) {
-  //   console.log(res1);
-  // }
-
-  await addEmailToDynamoDB(id, email);
+  await addEmailAndTimestampToDynamoDB(id, email);
   return message;
 };

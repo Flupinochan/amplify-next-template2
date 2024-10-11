@@ -14,11 +14,10 @@ const historySlice = createSlice({
   initialState,
   reducers: {
     setHistory: (state, action: PayloadAction<Array<Schema["ChatHistory"]["type"]>>) => {
-      console.log(action.payload);
-      state.history.push(...action.payload);
+      state.history = [...action.payload];
     },
     clearHistory: (state) => {
-      state.history.splice(0, state.history.length);
+      state.history = [];
     },
   },
 });

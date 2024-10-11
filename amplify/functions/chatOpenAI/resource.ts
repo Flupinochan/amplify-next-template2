@@ -6,6 +6,6 @@ export const chatOpenAI = defineFunction({
   timeoutSeconds: 30,
   memoryMB: 1024,
   environment: {
-    DYNAMODB_TABLE_NAME: "ChatHistory-t3fnjhgacjdybhn6bcdst7fos4-NONE",
+    DYNAMODB_TABLE_NAME: "ChatHistory-pytzo4hizfhzfhjiq73gyqd2za-NONE",
   },
 });

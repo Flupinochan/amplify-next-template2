@@ -5,7 +5,7 @@ import { setLoading } from "@/app/features/loadingChatSlice";
 
 const client = generateClient<Schema>();
 
-const useMutationChat = (dispatch: any) => {
+export const useMutationChat = (dispatch: any) => {
   const queryClient = useQueryClient(); 
   const chatOpenAI = async (id: string, email: string, message: string): Promise<any> => {
     const response = await client.queries.ChatOpenAI({ 
@@ -28,5 +28,3 @@ const useMutationChat = (dispatch: any) => {
     },
   });
 };
-
-export default useMutationChat;
